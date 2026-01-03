@@ -13,10 +13,35 @@
         <span>Codeforces Notifier</span>
     </div>
 
-    <label>Enter your Codeforces Handle: </label>
+    <!-- Saved handle card -->
+    <div class="handle-card">
+        <div class="label">Saved handle</div>
+        <div id="savedHandleValue" class="value">None</div>
+    </div>
 
-    <input type="text" id="handleInput" placeholder="Enter your Codeforces handle">
+    <!-- Update toggle button -->
+    <button id="updateToggle" class="update-btn">
+        Update handle
+    </button>
 
+    <!-- Collapsible update section -->
+    <div id="updateSection" class="collapse">
+
+        <button id="refetchBtn" class="autofetch-btn">Auto-fetch</button>
+
+        <div class="or-text">or</div>
+
+        <input type="text" id="handleInput" placeholder="Enter handle manually">
+
+        <button id="saveBtn" class="save-btn">Save</button>
+
+    </div>
+
+    <div id="status"></div>
+
+    <hr>
+
+    <!-- notifier toggle -->
     <div class="toggle-row">
         <label class="switch">
             <input type="checkbox" id="toggleNotifier">
@@ -25,12 +50,6 @@
 
         <span class="toggle-text">Verdict alerts</span>
     </div>
-
-    <div class="actions">
-        <button id="saveBtn">Save</button>
-    </div>
-
-    <div id="status"></div>
 
     <script src="popup.js"></script>
 

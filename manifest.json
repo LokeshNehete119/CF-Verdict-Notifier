@@ -8,7 +8,9 @@
         "alarms",
         "storage",
         "offscreen",
-        "windows"
+        "windows",
+        "scripting",
+        "tabs"
     ],
     "host_permissions": [
         "https://codeforces.com/*"
@@ -25,6 +27,16 @@
             ],
             "matches": [
                 "<all_urls>"
+            ]
+        }
+    ],
+    "content_scripts": [
+        {
+            "matches": [
+                "https://codeforces.com/*"
+            ],
+            "js": [
+                "content.js"
             ]
         }
     ],
