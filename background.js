@@ -1,8 +1,7 @@
-
 chrome.storage.sync.get("enabled", data => {
-    if (!data.enabled) return;
+    if (!data.enabled && data.enabled !== undefined) return;
 
-    console.log("CF notifier service worker started");
+    console.log("CF Verdict Buddy service worker started");
 
     let lastSubmissionId = null;
     let lastVerdict = null;
@@ -25,6 +24,8 @@ chrome.storage.sync.get("enabled", data => {
     // ---------- CORE CHECK FUNCTION ----------
 
     async function check() {
+        console.log("Polling Codeforces…");
+
         const data = await chrome.storage.sync.get("handle");
         const handle = data.handle;
 
@@ -85,7 +86,6 @@ chrome.storage.sync.get("enabled", data => {
             iconUrl: "icon.png"
         });
 
-        // sound mapping
         if (verdictText.includes("Accepted")) {
             playSound("play-ac");
         } else {
@@ -93,7 +93,7 @@ chrome.storage.sync.get("enabled", data => {
         }
     }
 
-    // ---------- SOUND HANDLING (Supports new + old Chrome) ----------
+    // ---------- SOUND HANDLING ----------
 
     let soundWindowId = null;
 
@@ -126,27 +126,47 @@ chrome.storage.sync.get("enabled", data => {
     async function playSound(type) {
         await ensureSoundTarget();
 
-        // wrap in try and suppress harmless connection errors
         try {
             chrome.runtime.sendMessage({ type }, () => {
                 const err = chrome.runtime.lastError;
                 if (err) {
-                    // retry once after listener is fully ready
                     setTimeout(() => {
-                        chrome.runtime.sendMessage({ type }, () => { });
+                        chrome.runtime.sendMessage({ type }, () => {});
                     }, 200);
                 }
             });
-        } catch (_) {
-            // ignore – service worker sometimes wakes/sleeps
-        }
+        } catch (_) {}
     }
 
+    // ---------- ALARM CREATION HELPERS ----------
 
-    // ---------- TIMER ----------
+    function createAlarm() {
+        chrome.alarms.create("cf-poll", { periodInMinutes: 0.05 });
+        console.log("Alarm created: cf-poll");
+    }
 
-    chrome.alarms.create({ periodInMinutes: 0.05 });
-    chrome.alarms.onAlarm.addListener(check);
+    // when extension is installed or updated
+    chrome.runtime.onInstalled.addListener(() => {
+        createAlarm();
+    });
 
+    // when browser starts
+    chrome.runtime.onStartup.addListener(() => {
+        createAlarm();
+    });
+
+    // if service worker wakes and nothing exists, recreate
+    chrome.alarms.getAll(alarms => {
+        if (!alarms.some(a => a.name === "cf-poll")) {
+            createAlarm();
+        }
+    });
+
+    // run check on alarm
+    chrome.alarms.onAlarm.addListener(alarm => {
+        if (alarm.name === "cf-poll") {
+            check();
+        }
+    });
 
 });
