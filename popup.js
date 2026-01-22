@@ -3,15 +3,14 @@ document.addEventListener("DOMContentLoaded", () => {
     const saveBtn = document.getElementById("saveBtn");
     const status = document.getElementById("status");
     const toggle = document.getElementById("toggleNotifier");
-    const label = document.querySelector(".toggle-text");
+    const soundToggle = document.getElementById("soundToggle");
+    const labels = document.querySelectorAll(".toggle-text");
     const refetchBtn = document.getElementById("refetchBtn");
 
-    // NEW UI elements
     const savedHandleValue = document.getElementById("savedHandleValue");
     const updateToggle = document.getElementById("updateToggle");
     const updateSection = document.getElementById("updateSection");
 
-    // collapse / expand update area
     updateToggle.onclick = () => {
         updateSection.style.display =
             updateSection.style.display === "none" || updateSection.style.display === ""
@@ -23,13 +22,11 @@ document.addEventListener("DOMContentLoaded", () => {
         updateSection.style.display = "none";
     }
 
-    // ---------- helper: update Saved handle display ----------
     function updateSavedHandleDisplay(handle) {
         savedHandleValue.textContent = handle;
     }
 
-    // ---------- load saved handle ----------
-    chrome.storage.sync.get(["handle", "enabled"], data => {
+    chrome.storage.sync.get(["handle", "enabled", "soundEnabled"], data => {
 
         if (data.handle) {
             input.value = data.handle;
@@ -39,13 +36,14 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         toggle.checked = data.enabled ?? true;
+        soundToggle.checked = data.soundEnabled ?? true;
         setLabelColor();
     });
 
-    // ---------- toggle color ----------
     function setLabelColor() {
-        if (!label) return;
-        label.style.color = toggle.checked ? "#4ade80" : "#9ca3af";
+        labels.forEach(label => {
+            label.style.color = toggle.checked ? "#4ade80" : "#9ca3af";
+        });
     }
 
     toggle.onchange = () => {
@@ -53,9 +51,11 @@ document.addEventListener("DOMContentLoaded", () => {
         setLabelColor();
     };
 
-    // ---------- SAVE manually entered handle ----------
-    saveBtn.onclick = async () => {
+    soundToggle.onchange = () => {
+        chrome.storage.sync.set({ soundEnabled: soundToggle.checked });
+    };
 
+    saveBtn.onclick = async () => {
         const handle = input.value.trim();
 
         if (!handle) {
@@ -75,19 +75,17 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
 
-           chrome.storage.sync.set({ handle }, () => {
-    updateSavedHandleDisplay(handle);
-    showStatus("Saved successfully ✓", true);
-    closeUpdateSection();   // NEW
-});
-
+            chrome.storage.sync.set({ handle }, () => {
+                updateSavedHandleDisplay(handle);
+                showStatus("Saved successfully ✓", true);
+                closeUpdateSection();
+            });
 
         } catch (e) {
             showStatus("Network error", false);
         }
     };
 
-    // ---------- AUTO-FETCH handle ----------
     refetchBtn.onclick = () => {
         showStatus("Detecting...", true);
 
@@ -119,22 +117,19 @@ document.addEventListener("DOMContentLoaded", () => {
                     input.value = detected;
 
                     chrome.storage.sync.set({ handle: detected }, () => {
-    updateSavedHandleDisplay(detected);
-    showStatus("Auto-fetched ✓", true);
-    closeUpdateSection();   // NEW
-});
-
+                        updateSavedHandleDisplay(detected);
+                        showStatus("Auto-fetched ✓", true);
+                        closeUpdateSection();
+                    });
                 }
             );
         });
     };
 
-    // ---------- status helper ----------
     function showStatus(msg, ok) {
         status.textContent = msg;
         status.style.color = ok ? "#4ade80" : "#f87171";
         status.style.opacity = 1;
         setTimeout(() => status.style.opacity = 0, 1800);
     }
-
 });
